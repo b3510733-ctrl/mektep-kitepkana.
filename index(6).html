@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Школьная библиотека — учебники онлайн</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --primary: #3a6ea5;
+  --primary-dark: #2c5684;
+  --accent: #ffb703;
+  --text: #22293b;
+  --muted: #6b7280;
+  --radius: 14px;
+  --shadow: 0 4px 16px rgba(34, 41, 59, .08);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 20px; flex: 1; }
+
+/* Шапка */
+.site-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  padding: 18px 0;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.header-inner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.logo { font-size: 1.3rem; font-weight: 700; white-space: nowrap; }
+.search {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  font-size: 1rem;
+  outline: none;
+}
+
+/* Фильтры */
+.filters { margin: 24px 0 8px; display: flex; flex-direction: column; gap: 10px; }
+.filter-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.filter-label { font-weight: 600; color: var(--muted); margin-right: 4px; }
+.chip {
+  border: 1px solid #d4dbe8;
+  background: #fff;
+  color: var(--text);
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: .9rem;
+  transition: .15s;
+}
+.chip:hover { border-color: var(--primary); color: var(--primary); }
+.chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.results-count { color: var(--muted); margin: 10px 0 16px; }
+
+/* Каталог */
+.catalog {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding-bottom: 40px;
+}
+.book-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform .18s, box-shadow .18s;
+  display: flex;
+  flex-direction: column;
+}
+.book-card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(34,41,59,.14); }
+.cover {
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  color: rgba(255,255,255,.92);
+  font-weight: 700;
+}
+.book-info { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.book-title { font-weight: 600; font-size: .98rem; line-height: 1.3; }
+.book-author { color: var(--muted); font-size: .85rem; }
+.book-tags { margin-top: auto; display: flex; gap: 6px; }
+.tag {
+  font-size: .72rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #eef2f9;
+  color: var(--primary-dark);
+}
+
+.empty { text-align: center; color: var(--muted); padding: 60px 0; font-size: 1.1rem; }
+
+/* Подвал */
+.site-footer {
+  background: #1e2b45;
+  color: #cdd6e4;
+  padding: 24px 0;
+  margin-top: auto;
+  font-size: .9rem;
+  display: flex;
+  flex-direction: column;
+}
+.site-footer .hint { color: #8b98ad; margin-top: 6px; font-size: .82rem; }
+code { background: rgba(255,255,255,.12); padding: 1px 6px; border-radius: 5px; }
+
+/* Модальное окно */
+.modal { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.55); }
+.modal-card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius);
+  max-width: 520px;
+  width: calc(100% - 40px);
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.modal-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  border: none;
+  background: #eef2f9;
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1rem;
+  color: var(--muted);
+}
+.modal-close:hover { background: #e2e8f4; }
+.modal-cover {
+  height: 120px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.6rem; color: #fff; margin-bottom: 18px;
+}
+.modal-card h2 { margin-bottom: 6px; font-size: 1.25rem; }
+.modal-author { color: var(--muted); margin-bottom: 14px; }
+.modal-desc { line-height: 1.55; margin-bottom: 20px; font-size: .95rem; }
+.btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #3a2e00;
+  font-weight: 700;
+  padding: 11px 22px;
+  border-radius: 10px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-size: .95rem;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn.disabled { background: #e5e7eb; color: var(--muted); cursor: not-allowed; }
+
+@media (max-width: 560px) {
+  .header-inner { flex-direction: column; align-items: stretch; }
+  .logo { text-align: center; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <div class="logo">📚 Школьная библиотека</div>
+    <input type="text" id="search" class="search" placeholder="Поиск по названию или автору...">
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="filters">
+    <div class="filter-group" id="classFilters">
+      <span class="filter-label">Класс:</span>
+      <button class="chip active" data-class="all">Все</button>
+      <button class="chip" data-class="1">1</button>
+      <button class="chip" data-class="5">5</button>
+      <button class="chip" data-class="6">6</button>
+      <button class="chip" data-class="7">7</button>
+      <button class="chip" data-class="8">8</button>
+      <button class="chip" data-class="9">9</button>
+      <button class="chip" data-class="10">10</button>
+      <button class="chip" data-class="11">11</button>
+    </div>
+    <div class="filter-group" id="subjectFilters">
+      <span class="filter-label">Предмет:</span>
+      <button class="chip active" data-subject="all">Все</button>
+      <button class="chip" data-subject="Математика">Математика</button>
+      <button class="chip" data-subject="Русский язык">Русский язык</button>
+      <button class="chip" data-subject="Литература">Литература</button>
+      <button class="chip" data-subject="История">История</button>
+      <button class="chip" data-subject="Физика">Физика</button>
+      <button class="chip" data-subject="Биология">Биология</button>
+      <button class="chip" data-subject="Английский язык">Английский</button>
+      <button class="chip" data-subject="Химия">Химия</button>
+      <button class="chip" data-subject="Окружающий мир">Окружающий мир</button>
+    </div>
+  </section>
+
+  <p class="results-count" id="resultsCount"></p>
+  <section class="catalog" id="catalog"></section>
+  <p class="empty" id="empty" hidden>Ничего не найдено 😔 Попробуйте изменить запрос или фильтры.</p>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>Школьная библиотека • Учебники для 1–11 классов</p>
+  </div>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-backdrop" onclick="closeModal()"></div>
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+//  КАТАЛОГ КНИГ
+//  Чтобы добавить свою книгу, добавьте объект в список BOOKS:
+//  {
+//    id: 11,                        // уникальный номер
+//    title: "Название учебника",
+//    author: "Автор",
+//    class: 9,                      // класс (число)
+//    subject: "Физика",             // предмет (как в фильтрах)
+//    file: "books/nazvanie.pdf",    // путь к файлу (или null)
+//    emoji: "⚡",                   // иконка на обложке
+//    color: "#7c3aed",              // цвет обложки
+//    desc: "Краткое описание..."
+//  }
+// ============================================
+
+const BOOKS = [
+  { id: 17, title: "Я и мир. 1 класс, часть 1",       author: "Солошенко О.В., Токтобаева Г.Д.", class: 1, subject: "Окружающий мир", emoji: "🌍", color: "#e63946", file: "ya-i-mir-1-rus.pdf",   desc: "Учебное пособие для школ Кыргызской Республики с русским языком обучения (изд. «Аркус», 2025). Совмещает учебник и рабочую тетрадь. Часть 1: моя Родина — Кыргызстан, государственные символы, моя школа, я — ученик, поведение в школе, мой класс, природа живая и неживая, космос, мой дом — Земля, природные явления, осень и безопасность." },
+  { id: 18, title: "Мен жана дүйнө. 1-класс, 1-бөлүк", author: "Солошенко О.В., Токтобаева Г.Д.", class: 1, subject: "Окружающий мир", emoji: "🏔️", color: "#f4a261", file: "men-zhana-dunyo-1-kyr.pdf", desc: "Окуу куралы кыргыз тилинде (изд. «Аркус», 2024). Окуу китеп менен жумушчу дептерди камтыйт. 1-бөлүк: Мекеним — Кыргызстан, мамлекеттик символдор, мектебим, мен — окуучумун, мектепте өзүңдү кантип алып жүрүш керек, классым, жандуу жана жансыз табият, космос, Жер шары, табият кубулуштары, күз мезгили жана коопсуздук." },
+  { id: 1,  title: "Математика. 5 класс",            author: "Виленкин Н.Я., Жохов В.И.", class: 5,  subject: "Математика",   emoji: "➗", color: "#3b82f6", file: "books/matematika-5.pdf",        desc: "Базовый учебник арифметики для 5 класса: натуральные числа, дроби, геометрические фигуры, задачи на логику." },
+  { id: 2,  title: "Русский язык. 5 класс",          author: "Ладыженская Т.А., Баранов М.Т.", class: 5, subject: "Русский язык", emoji: "✍️", color: "#ef4444", file: "books/russkiy-5.pdf",          desc: "Фонетика, лексика, морфология и орфография. Учебник с упражнениями после каждого параграфа." },
+  { id: 3,  title: "История Древнего мира. 5 класс", author: "Вигасин А.А., Годер Г.И.",     class: 5,  subject: "История",      emoji: "🏛️", color: "#f59e0b", file: "books/istoriya-5.pdf",          desc: "От первобытности до падения Римской империи: Древний Египет, Греция, Рим." },
+  { id: 4,  title: "Математика. 6 класс",            author: "Виленкин Н.Я., Жохов В.И.",   class: 6,  subject: "Математика",   emoji: "🔢", color: "#3b82f6", file: "books/matematika-6.pdf",        desc: "Отношения и пропорции, положительные и отрицательные числа, выражения и уравнения." },
+  { id: 5,  title: "Литература. 6 класс",            author: "Коровина В.Я.",               class: 6,  subject: "Литература",   emoji: "📖", color: "#8b5cf6", file: "books/literatura-6.pdf",        desc: "Русская и зарубежная классика: басни Крылова, произведения Пушкина, Гоголя, Тургенева." },
+  { id: 6,  title: "Биология. 6 класс",              author: "Пасечник В.В.",               class: 6,  subject: "Биология",     emoji: "🌿", color: "#22c55e", file: "books/biologiya-6.pdf",         desc: "Царства живой природы: бактерии, грибы, растения, животные. Лабораторные работы и опыты." },
+  { id: 7,  title: "Алгебра. 7 класс",                 author: "Макарычев Ю.Н., Миндюк Н.Г.", class: 7,  subject: "Математика",   emoji: "🧮", color: "#06b6d4", file: "books/algebra-7.pdf",           desc: "Степени и многочлены, формулы сокращённого умножения, системы уравнений, функции." },
+  { id: 8,  title: "Физика. 7 класс",                author: "Пёрышкин А.В.",               class: 7,  subject: "Физика",       emoji: "⚡", color: "#7c3aed", file: "books/fizika-7.pdf",            desc: "Механика, тепловые явления, электричество. Опытная часть и задачи повышенной сложности." },
+  { id: 9,  title: "Английский язык. 7 класс",       author: "Ваулина Ю.Е., Дули Д.",       class: 7,  subject: "Английский язык", emoji: "🇬🇧", color: "#ec4899", file: "books/english-7.pdf",      desc: "Spotlight 7: грамматика, диалоги, тематические тексты и аудиокурс к учебнику." },
+  { id: 10, title: "Геометрия. 8 класс",               author: "Атанасян Л.С., Бутузов В.Ф.", class: 8,  subject: "Математика",   emoji: "📐", color: "#0ea5e9", file: "books/geometriya-8.pdf",        desc: "Четырёхугольники, окружность, площади, теорема Пифагора, подобные треугольники." },
+  { id: 11, title: "Химия. 8 класс",                 author: "Рудзитис Г.Е., Фельдман Ф.Г.", class: 8,  subject: "Химия",        emoji: "🧪", color: "#84cc16", file: "books/himiya-8.pdf",            desc: "Атомы и молекулы, периодическая система, химические реакции, растворы." },
+  { id: 12, title: "Физика. 9 класс",                author: "Пёрышкин А.В., Гутник Е.М.",   class: 9,  subject: "Физика",       emoji: "🌊", color: "#7c3aed", file: "books/fizika-9.pdf",            desc: "Колебания и волны, электромагнитное поле, строение атома. Подготовка к ОГЭ." },
+  { id: 13, title: "История России. 9 класс",        author: "Данилов А.А., Косулина Л.Г.",  class: 9,  subject: "История",      emoji: "🦅", color: "#f59e0b", file: "books/istoriya-rossii-9.pdf",  desc: "Новейшая история: от реформ 1860-х до конца XX века. Подготовка к ОГЭ по истории." },
+  { id: 14, title: "Алгебра и начала анализа. 10 класс", author: "Мерзляк А.Г., Полонский В.Б.", class: 10, subject: "Математика", emoji: "∑", color: "#06b6d4", file: "books/algebra-10.pdf",       desc: "Тригонометрия, степенные и логарифмические функции, производная и её применение." },
+  { id: 15, title: "Биология. 10–11 класс",          author: "Теремов А.В., Петрова А.Г.",   class: 11, subject: "Биология",     emoji: "🧬", color: "#22c55e", file: "books/biologiya-11.pdf",      desc: "Общая биология: генетика, селекция, эволюция, экология. ЕГЭ-ориентированный материал." },
+  { id: 16, title: "Литература. 11 класс",           author: "Чалмаев В.А.",                class: 11, subject: "Литература",   emoji: "🎭", color: "#8b5cf6", file: "books/literatura-11.pdf",     desc: "Русская литература XX века: Бунин, Ахматова, Бродский. Подготовка к ЕГЭ по литературе." },
+];
+
+// ======= ЛОГИКА САЙТА (менять не нужно) =======
+
+const state = { search: "", class: "all", subject: "all" };
+
+const catalog = document.getElementById("catalog");
+const emptyMsg = document.getElementById("empty");
+const resultsCount = document.getElementById("resultsCount");
+const modal = document.getElementById("modal");
+const modalBody = document.getElementById("modalBody");
+
+function render() {
+  const q = state.search.toLowerCase();
+  const filtered = BOOKS.filter(b =>
+    (state.class === "all"   || b.class === +state.class) &&
+    (state.subject === "all" || b.subject === state.subject) &&
+    (q === "" || b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q))
+  );
+
+  catalog.innerHTML = filtered.map(b => `
+    <div class="book-card" onclick="openBook(${b.id})">
+      <div class="cover" style="background:${b.color}">${b.emoji}</div>
+      <div class="book-info">
+        <div class="book-title">${b.title}</div>
+        <div class="book-author">${b.author}</div>
+        <div class="book-tags">
+          <span class="tag">${b.class} класс</span>
+          <span class="tag">${b.subject}</span>
+        </div>
+      </div>
+    </div>`).join("");
+
+  emptyMsg.hidden = filtered.length > 0;
+  resultsCount.textContent = `Найдено книг: ${filtered.length}`;
+}
+
+function openBook(id) {
+  const b = BOOKS.find(x => x.id === id);
+  const btn = b.file
+    ? `<a class="btn" href="${b.file}" target="_blank" rel="noopener">📥 Скачать / читать</a>`
+    : `<button class="btn disabled" disabled>Файл скоро появится</button>`;
+  modalBody.innerHTML = `
+    <div class="modal-cover" style="background:${b.color}">${b.emoji}</div>
+    <h2>${b.title}</h2>
+    <p class="modal-author">${b.author}</p>
+    <p class="modal-desc">${b.desc}</p>
+    <div class="book-tags" style="margin-bottom:20px">
+      <span class="tag">${b.class} класс</span>
+      <span class="tag">${b.subject}</span>
+    </div>
+    ${btn}`;
+  modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  modal.hidden = true;
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+document.getElementById("search").addEventListener("input", e => {
+  state.search = e.target.value;
+  render();
+});
+
+document.getElementById("classFilters").addEventListener("click", e => {
+  if (!e.target.classList.contains("chip")) return;
+  document.querySelectorAll("#classFilters .chip").forEach(c => c.classList.remove("active"));
+  e.target.classList.add("active");
+  state.class = e.target.dataset.class;
+  render();
+});
+
+document.getElementById("subjectFilters").addEventListener("click", e => {
+  if (!e.target.classList.contains("chip")) return;
+  document.querySelectorAll("#subjectFilters .chip").forEach(c => c.classList.remove("active"));
+  e.target.classList.add("active");
+  state.subject = e.target.dataset.subject;
+  render();
+});
+
+render();
+
+</script>
+</body>
+</html>
